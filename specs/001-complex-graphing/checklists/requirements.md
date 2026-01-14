@@ -31,4 +31,7 @@
 
 ## Notes
 
-- Spec is ready for planning.
+- Spec has been updated to Korean as requested.
+- Requirements cover implicit multiplication, dynamic sliders (range/step), animation, pan/zoom, coordinate switching, and polar grid.
+- Implementation-specific recommendations (Mafs, Zustand, mathjs) from `recommendation.md` have been abstracted into functional/performance requirements (FR-002, FR-003, FR-008, SC-002).
+- Ready for planning.
