@@ -5,6 +5,14 @@
 **Status**: Draft
 **Input**: User description: "@docs/recommendation.md 해당 요구사항을 참조하여 specify를 진행하고 @docs/specify 에 한국어로 저장해줘."
 
+## Clarifications
+
+### Session 2026-01-15
+- Q: How should application state be persisted? → A: URL Params (Option B) - Equations and settings will be synced to the URL for sharing.
+- Q: How to handle multi-valued functions (e.g., sqrt, log)? → A: Principal Value (Option A) - Only the principal value (e.g., sqrt(-1) = i) will be displayed by default.
+- Q: What data type should slider variables support? → A: Real Only (Option A) - Sliders will strictly control real number values. Complex variables must be composed of two real variables (e.g., `a + bi`).
+- Q: How to handle undefined values (e.g., 1/0)? → A: Error Indicator (Option A) - Explicitly display "Undefined" error or hide graph element.
+
 ## 사용자 시나리오 및 테스트 (User Scenarios & Testing) *(필수)*
 
 ### 사용자 스토리 1 - 복소수 수식 시각화 (우선순위: P1)
@@ -20,6 +28,7 @@
 1. **Given** 애플리케이션이 로드된 상태에서, **When** 입력 패널에 `z = 3 + 4i`를 입력하면, **Then** 그래프의 (3, 4) 좌표에 점이 렌더링된다.
 2. **Given** 잘못된 수식(예: `z = ++`)이 입력되면, **When** 입력을 멈추거나 포커스를 잃을 때, **Then** 입력 필드 근처에 오류 표시가 나타난다.
 3. **Given** 암시적 곱셈을 사용하고자 할 때, **When** `2*i` 대신 `2i` 또는 `2z`를 입력하면, **Then** 시스템이 이를 곱셈으로 올바르게 해석하여 처리한다.
+4. **Given** 특정 수식이 입력된 상태에서, **When** 페이지를 새로고침하거나 URL을 공유하여 열면, **Then** 동일한 수식과 변수 상태가 복원된다.
 
 ---
 
@@ -60,7 +69,7 @@
 - **FR-001**: 시스템은 좌측 입력 패널과 우측 그래프 캔버스로 구성된 분할 화면 레이아웃을 제공해야 한다.
 - **FR-002**: 시스템은 복소수, 상수(i, e, pi), 기본 함수(sin, cos, exp 등)를 포함한 수학적 표현식을 파싱해야 한다.
 - **FR-003**: 시스템은 입력 수식에서 암시적 곱셈(예: `2i`, `3z`)을 지원해야 한다.
-- **FR-004**: 시스템은 수식 내의 자유 변수(free variables)를 자동으로 감지하여 UI 슬라이더를 생성해야 한다.
+- **FR-004**: 시스템은 수식 내의 자유 변수(free variables)를 자동으로 감지하여 UI 슬라이더를 생성해야 한다. 단, 슬라이더는 실수(Real number) 값만을 제어한다.
 - **FR-005**: 슬라이더는 사용자가 설정 가능한 범위(최소/최대)와 간격(Step) 값을 지원해야 한다. (기본값: -10 ~ 10, Step: 0.1 등)
 - **FR-006**: 시스템은 슬라이더 값의 자동 애니메이션(재생/일시정지, 반복/왕복 모드)을 지원해야 한다.
 - **FR-007**: 그래프 캔버스는 마우스/터치를 이용한 팬(Pan, 이동) 및 줌(Zoom, 확대/축소) 기능을 지원해야 한다.
@@ -68,11 +77,14 @@
 - **FR-009**: 시스템은 축 라벨을 "Real / Imaginary"와 "X / Y" 간에 전환할 수 있는 기능을 제공해야 한다.
 - **FR-010**: 복소평면 모드에서 선택적으로 극좌표(원형) 그리드를 오버레이할 수 있어야 한다.
 - **FR-011**: 그래프 요소 위에 마우스를 올리면 좌표값이나 복소수 속성(절댓값/편각)을 툴팁 등으로 표시해야 한다.
+- **FR-012**: 시스템은 현재 수식 및 변수 상태, 뷰 설정을 URL 파라미터와 동기화하여 공유 및 상태 복원을 지원해야 한다.
+- **FR-013**: 다가 함수(Multi-valued function, 예: sqrt, log)의 경우 주치(Principal Value)만을 계산하여 단일 점으로 표시한다.
+- **FR-014**: 수학적으로 정의되지 않은 연산(예: 0으로 나누기) 발생 시, 그래프 렌더링을 중단하고 사용자에게 명시적인 오류 메시지(예: "Undefined")를 표시해야 한다.
 
 ### 주요 엔티티 (Key Entities)
 
 - **Expression (수식)**: 사용자가 입력한 수학 공식 (예: `z = x + iy`).
-- **Variable (변수)**: UI 슬라이더와 연결된, 이름과 숫자 값을 가진 객체.
+- **Variable (변수)**: UI 슬라이더와 연결된, 실수(Real) 타입의 숫자 값을 가진 객체.
 - **PlotObject (그래프 객체)**: 수식의 결과로 캔버스에 그려지는 시각적 요소 (점, 선, 곡선).
 - **ViewSettings (뷰 설정)**: 그래프의 상태 설정 (좌표계 모드, 극좌표 그리드 표시 여부, 뷰포트 범위).
 
