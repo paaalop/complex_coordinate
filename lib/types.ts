@@ -45,3 +45,19 @@ export interface PlotResult {
     [key: string]: any;
   };
 }
+
+export interface SavedGraph {
+  id: string;
+  user_id: string;
+  title: string;
+  data: GraphState;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GraphState {
+  version: number;
+  expressions: Omit<Expression, 'compiled' | 'isValid' | 'error' | 'dependencies'>[];
+  variables: Variable[];
+  viewSettings: ViewSettings;
+}
