@@ -5,7 +5,6 @@ import { Mafs, Coordinates, Text } from 'mafs';
 import { useStore } from '@/lib/store/useStore';
 import { PlotLayer } from './PlotLayer';
 import { PolarGrid } from './PolarGrid';
-import { ViewTracker } from './ViewTracker';
 
 export const ComplexPlane = () => {
   const viewSettings = useStore(state => state.viewSettings);
@@ -14,15 +13,18 @@ export const ComplexPlane = () => {
   const xLabel = viewSettings.labels === 'ReIm' ? 'Re' : 'x';
   const yLabel = viewSettings.labels === 'ReIm' ? 'Im' : 'y';
 
+  // State for dragging
+  const [isDragging, setIsDragging] = React.useState(false);
+
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const ZOOM_SENSITIVITY = 0.0005; // Adjust for sensitivity
+    const ZOOM_SENSITIVITY = 0.0005; 
     const delta = e.deltaY;
-    const scale = 1 + delta * ZOOM_SENSITIVITY;
+    // Limit scale factor to avoid extreme jumps
+    const scale = Math.max(0.1, Math.min(10, 1 + delta * ZOOM_SENSITIVITY));
 
-    // Zoom towards center for simplicity in this fix (can be improved to zoom to mouse later)
     const xRange = viewSettings.xMax - viewSettings.xMin;
     const yRange = viewSettings.yMax - viewSettings.yMin;
     const xMid = (viewSettings.xMin + viewSettings.xMax) / 2;
@@ -39,22 +41,66 @@ export const ComplexPlane = () => {
     });
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    e.preventDefault();
+    
+    const width = e.currentTarget.clientWidth;
+    const height = e.currentTarget.clientHeight;
+    
+    if (width === 0 || height === 0) return;
+
+    const xRange = viewSettings.xMax - viewSettings.xMin;
+    const yRange = viewSettings.yMax - viewSettings.yMin;
+
+    const dx = e.movementX;
+    const dy = e.movementY;
+
+    // Drag Right (dx > 0) -> Move View Left (xMin decreases)
+    // Drag Down (dy > 0) -> Move View Up (yMin increases) - because Cartesian Y is Up, Pixel Y is Down
+    
+    const xShift = -dx * (xRange / width);
+    const yShift = dy * (yRange / height);
+
+    setViewSettings({
+      xMin: viewSettings.xMin + xShift,
+      xMax: viewSettings.xMax + xShift,
+      yMin: viewSettings.yMin + yShift,
+      yMax: viewSettings.yMax + yShift,
+    });
+  };
+
   return (
     <div 
-      className="w-full h-full min-h-[500px] border border-gray-200 rounded-lg overflow-hidden bg-white"
+      className="w-full h-full min-h-[500px] border border-gray-200 rounded-lg overflow-hidden bg-white cursor-move"
       onWheel={handleWheel}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
     >
       <Mafs
         viewBox={{
             x: [viewSettings.xMin, viewSettings.xMax],
             y: [viewSettings.yMin, viewSettings.yMax],
-            // Padding removed to prevent loop with ViewTracker
         }}
         preserveAspectRatio={false}
-        pan={true}
-        zoom={false} // Handled manually
+        pan={false}
+        zoom={false}
       >
-        <ViewTracker />
         <Coordinates.Cartesian
           subdivisions={2}
           xAxis={{ 
