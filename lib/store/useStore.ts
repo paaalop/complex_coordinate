@@ -23,6 +23,7 @@ interface AppState {
   updateVariables: (updates: Record<string, number>) => void;
   setVariableConfig: (name: string, config: Partial<Variable>) => void;
   toggleAnimation: (name: string) => void;
+  loadState: (savedState: import('../types').GraphState) => void;
   
   // View Actions (Phase 5)
   toggleLabels: () => void;
@@ -240,6 +241,70 @@ export const useStore = create<AppState>()(
                 plotResults: newResults
             };
         });
+    },
+
+    loadState: (savedState) => {
+        set(state => {
+             // Parse expressions
+            const newExpressions = savedState.expressions.map(e => {
+                 // Logic duplicated from setExpression for parsing
+                const raw = e.raw;
+                const eqIndex = raw.indexOf('=');
+                let expressionToParse = raw;
+                let targetVariable = '';
+                
+                if (eqIndex !== -1) {
+                    const leftPart = raw.substring(0, eqIndex).trim();
+                    const rightPart = raw.substring(eqIndex + 1).trim();
+                    if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(leftPart)) {
+                        targetVariable = leftPart;
+                        expressionToParse = rightPart;
+                    } else if (leftPart.includes('(')) {
+                        targetVariable = leftPart.split('(')[0].trim();
+                        expressionToParse = rightPart;
+                    }
+                }
+
+                const { compiled, isValid, error, dependencies } = parseExpression(expressionToParse);
+                return {
+                    ...e,
+                    raw,
+                    targetVariable, // Use parsed or saved? Saved might be better if we trust it, but re-parsing ensures consistency.
+                    compiled,
+                    isValid: isValid && !error,
+                    error,
+                    dependencies
+                };
+            });
+
+            const newVariables: Record<string, import('../types').Variable> = {};
+            savedState.variables.forEach(v => {
+                newVariables[v.name] = v;
+            });
+
+            const newResults = reEvaluateAll(newExpressions, newVariables, savedState.viewSettings);
+
+            return {
+                expressions: newExpressions,
+                variables: newVariables,
+                viewSettings: savedState.viewSettings,
+                plotResults: newResults
+            };
+        });
     }
   }))
 );
+
+export const serializeGraphState = (): import('../types').GraphState => {
+  const state = useStore.getState();
+  return {
+    version: 1,
+    expressions: state.expressions.map(({ id, raw, targetVariable }) => ({ 
+      id, 
+      raw, 
+      targetVariable 
+    })),
+    variables: Object.values(state.variables),
+    viewSettings: state.viewSettings
+  };
+};
