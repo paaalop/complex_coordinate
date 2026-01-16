@@ -7,9 +7,18 @@ export async function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  if (!url || !key) {
+    return {
+      auth: {
+        getUser: async () => ({ data: { user: null }, error: null }),
+        exchangeCodeForSession: async () => ({ error: null }),
+      },
+    } as any;
+  }
+
   return createServerClient(
-    url || 'https://placeholder.supabase.co',
-    key || 'placeholder',
+    url,
+    key,
     {
       cookies: {
         getAll() {
