@@ -5,6 +5,7 @@ import { Mafs, Coordinates, Text } from 'mafs';
 import { useStore } from '@/lib/store/useStore';
 import { PlotLayer } from './PlotLayer';
 import { PolarGrid } from './PolarGrid';
+import { ViewTracker } from './ViewTracker';
 
 export const ComplexPlane = () => {
   const viewSettings = useStore(state => state.viewSettings);
@@ -23,16 +24,8 @@ export const ComplexPlane = () => {
         preserveAspectRatio={false}
         pan={true}
         zoom={true}
-        onViewChange={(view) => {
-            // Update store bounds for dynamic sampling (T007)
-            useStore.getState().setViewSettings({
-                xMin: view.x[0],
-                xMax: view.x[1],
-                yMin: view.y[0],
-                yMax: view.y[1]
-            });
-        }}
       >
+        <ViewTracker />
         <Coordinates.Cartesian
           subdivisions={2}
           xAxis={{ 

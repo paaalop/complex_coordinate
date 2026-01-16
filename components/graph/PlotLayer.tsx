@@ -38,12 +38,13 @@ export const PlotLayer = () => {
             } else {
                 // Re/Im mode: Parametric plot
                 return (
-                    <Plot.OfT 
+                    <Plot.Parametric 
                         key={result.expressionId}
-                        t={(t: number) => {
+                        xy={(t: number) => {
                             const res = curveFn(t) as ComplexNumber;
                             return [res.re, res.im];
                         }}
+                        domain={[-100, 100]}
                         color={result.color || Theme.blue}
                     />
                 );

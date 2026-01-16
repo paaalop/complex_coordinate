@@ -202,7 +202,7 @@ export const useStore = create<AppState>()(
 
     toggleLabels: () => {
         set(state => {
-            const newLabels = state.viewSettings.labels === 'ReIm' ? 'XY' : 'ReIm';
+            const newLabels: ViewSettings['labels'] = state.viewSettings.labels === 'ReIm' ? 'XY' : 'ReIm';
             const newViewSettings = { ...state.viewSettings, labels: newLabels };
             const newResults = reEvaluateAll(state.expressions, state.variables, newViewSettings);
             return {
